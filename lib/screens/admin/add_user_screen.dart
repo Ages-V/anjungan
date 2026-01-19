@@ -20,17 +20,19 @@ class _AddUserScreenState extends State<AddUserScreen> {
   
   bool _isLoading = false;
 
+  // Warna Tema
+  final Color primaryColor = const Color(0xFFA50000);
+  final Color backgroundColor = const Color(0xFFF2F4F7);
+
   void _submit() async {
-    // 1. Validasi Form Standar
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 
-    // 2. Validasi Khusus: Jika Mahasiswa, Wajib pilih Dosen
     if (_role == 'mahasiswa' && _selectedDospemID == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Harap pilih Dosen Pembimbing untuk mahasiswa!"),
-          backgroundColor: Colors.red,
+          backgroundColor: primaryColor,
         )
       );
       return;
@@ -39,8 +41,6 @@ class _AddUserScreenState extends State<AddUserScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // 3. Panggil Service untuk buat User (Tanpa Logout Admin)
-      // Password default diset sama dengan Nomor Induk (NPM/NIDN)
       await AuthService().createUserByAdmin(
         email: _email,
         password: _nomorInduk, 
@@ -51,15 +51,13 @@ class _AddUserScreenState extends State<AddUserScreen> {
         dospemID: _role == 'mahasiswa' ? _selectedDospemID : null,
       );
 
-      // 4. Sukses
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("User $_nama berhasil dibuat!"))
+        SnackBar(content: Text("User $_nama berhasil dibuat!"), backgroundColor: Colors.green)
       );
-      Navigator.pop(context); // Kembali ke dashboard
+      Navigator.pop(context); 
 
     } catch (e) {
-      // 5. Error Handler
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Gagal: ${e.toString()}"), backgroundColor: Colors.red)
@@ -69,156 +67,262 @@ class _AddUserScreenState extends State<AddUserScreen> {
     }
   }
 
+  // Helper untuk Style Input
+  InputDecoration _inputDecor(String label, {String? helper}) {
+    return InputDecoration(
+      labelText: label,
+      helperText: helper,
+      helperMaxLines: 2,
+      labelStyle: TextStyle(fontFamily: 'Poppins', color: Colors.grey[700]),
+      helperStyle: TextStyle(fontFamily: 'Poppins', fontSize: 11, color: primaryColor),
+      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade400),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade400),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: primaryColor, width: 2),
+      ),
+      filled: true,
+      fillColor: Colors.white,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Tambah User Baru")),
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        title: Text(
+          "Tambah User Baru",
+          style: TextStyle(fontFamily: 'Poppins', fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: primaryColor,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              // 1. DROPDOWN ROLE
-              DropdownButtonFormField<String>(
-                value: _role,
-                decoration: InputDecoration(
-                  labelText: "Role Pengguna",
-                  border: OutlineInputBorder(),
-                ),
-                items: ['mahasiswa', 'dosen', 'admin'].map((r) => 
-                  DropdownMenuItem(value: r, child: Text(r.toUpperCase()))
-                ).toList(),
-                onChanged: (val) {
-                  setState(() {
-                    _role = val!;
-                    // Reset dospem jika pindah role bukan mahasiswa
-                    if (_role != 'mahasiswa') _selectedDospemID = null;
-                  });
-                },
+        padding: EdgeInsets.all(20),
+        child: Column(
+          children: [
+            // Container Putih (Card Style)
+            Container(
+              padding: EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  )
+                ],
               ),
-              SizedBox(height: 16),
-
-              // 2. NAMA LENGKAP
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: "Nama Lengkap",
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) => (val == null || val.isEmpty) ? "Wajib diisi" : null,
-                onSaved: (val) => _nama = val!,
-              ),
-              SizedBox(height: 16),
-
-              // 3. EMAIL
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: "Email",
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (val) => (val != null && !val.contains('@')) ? "Format email salah" : null,
-                onSaved: (val) => _email = val!,
-              ),
-              SizedBox(height: 16),
-
-              // 4. NOMOR INDUK (NPM/NIDN) - SUDAH DIPERBAIKI
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: "Nomor Induk (NPM/NIDN/NIP)",
-                  // Helper text sekarang ada di dalam InputDecoration (BENAR)
-                  helperText: "Akan digunakan sebagai Password Default akun ini.",
-                  border: OutlineInputBorder(),
-                ),
-                validator: (val) => (val == null || val.length < 5) ? "Minimal 5 karakter" : null,
-                onSaved: (val) => _nomorInduk = val!,
-              ),
-              SizedBox(height: 16),
-
-              // 5. PRODI
-              TextFormField(
-                initialValue: "Informatika",
-                decoration: InputDecoration(
-                  labelText: "Program Studi",
-                  border: OutlineInputBorder(),
-                ),
-                onSaved: (val) => _prodi = val!,
-              ),
-              SizedBox(height: 16),
-
-              // 6. PILIH DOSEN PEMBIMBING (Hanya Muncul Jika Role = Mahasiswa)
-              if (_role == 'mahasiswa') ...[
-                Container(
-                  padding: EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.shade100)
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Pilih Dosen Pembimbing:", style: TextStyle(fontWeight: FontWeight.bold)),
-                      SizedBox(height: 8),
-                      StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance.collection('user')
-                            .where('role', isEqualTo: 'dosen').snapshots(),
-                        builder: (context, snapshot) {
-                          // Loading State
-                          if (!snapshot.hasData) {
-                            return Center(child: CircularProgressIndicator());
-                          }
-                          
-                          // Jika belum ada dosen sama sekali
-                          if (snapshot.data!.docs.isEmpty) {
-                            return Text("Belum ada data Dosen. Tambahkan user Dosen dulu.", 
-                              style: TextStyle(color: Colors.red));
-                          }
-                          
-                          // Dropdown Dosen
-                          var dosens = snapshot.data!.docs;
-                          return DropdownButtonFormField<String>(
-                            value: _selectedDospemID,
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(),
-                            ),
-                            hint: Text("Pilih Nama Dosen"),
-                            items: dosens.map((doc) {
-                              var data = doc.data() as Map<String, dynamic>;
-                              return DropdownMenuItem(
-                                value: doc.id, // Value-nya adalah UID Dosen
-                                child: Text("${data['nama']} (${data['nomorInduk']})"),
-                              );
-                            }).toList(),
-                            onChanged: (val) => setState(() => _selectedDospemID = val),
-                          );
-                        },
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Data Pengguna",
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 24),
-              ],
-
-              // 7. TOMBOL SUBMIT
-              _isLoading 
-                ? CircularProgressIndicator()
-                : SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _submit,
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: Text("SIMPAN USER BARU", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
-                  ),
-            ],
-          ),
+                    Divider(color: Colors.grey[200], thickness: 1.5, height: 24),
+
+                    // 1. DROPDOWN ROLE
+                    DropdownButtonFormField<String>(
+                      value: _role,
+                      decoration: _inputDecor("Role Pengguna"),
+                      style: TextStyle(fontFamily: 'Poppins', color: Colors.black),
+                      items: ['mahasiswa', 'dosen', 'admin'].map((r) => 
+                        DropdownMenuItem(value: r, child: Text(r.toUpperCase()))
+                      ).toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          _role = val!;
+                          if (_role != 'mahasiswa') _selectedDospemID = null;
+                        });
+                      },
+                    ),
+                    SizedBox(height: 16),
+
+                    // 2. NAMA LENGKAP
+                    TextFormField(
+                      decoration: _inputDecor("Nama Lengkap"),
+                      style: TextStyle(fontFamily: 'Poppins'),
+                      validator: (val) => (val == null || val.isEmpty) ? "Wajib diisi" : null,
+                      onSaved: (val) => _nama = val!,
+                    ),
+                    SizedBox(height: 16),
+
+                    // 3. EMAIL
+                    TextFormField(
+                      decoration: _inputDecor("Email"),
+                      style: TextStyle(fontFamily: 'Poppins'),
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (val) => (val != null && !val.contains('@')) ? "Format email salah" : null,
+                      onSaved: (val) => _email = val!,
+                    ),
+                    SizedBox(height: 16),
+
+                    // 4. NOMOR INDUK
+                    TextFormField(
+                      decoration: _inputDecor(
+                        "Nomor Induk (NPM/NIDN/NIP)",
+                        helper: "Digunakan sebagai Password Default akun.",
+                      ),
+                      style: TextStyle(fontFamily: 'Poppins'),
+                      validator: (val) => (val == null || val.length < 5) ? "Minimal 5 karakter" : null,
+                      onSaved: (val) => _nomorInduk = val!,
+                    ),
+                    SizedBox(height: 16),
+
+                    // 5. PRODI
+                    TextFormField(
+                      initialValue: "Informatika",
+                      decoration: _inputDecor("Program Studi"),
+                      style: TextStyle(fontFamily: 'Poppins'),
+                      onSaved: (val) => _prodi = val!,
+                    ),
+                    SizedBox(height: 20),
+
+                    // 6. PILIH DOSEN (Kondisional)
+                    if (_role == 'mahasiswa') ...[
+                      Container(
+                        padding: EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFFFF5F5), // Merah sangat muda
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: primaryColor.withOpacity(0.2)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.school, color: primaryColor, size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Dosen Pembimbing",
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.bold,
+                                    color: primaryColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 12),
+                            StreamBuilder<QuerySnapshot>(
+                              stream: FirebaseFirestore.instance.collection('user')
+                                  .where('role', isEqualTo: 'dosen').snapshots(),
+                              builder: (context, snapshot) {
+                                if (!snapshot.hasData) {
+                                  return Center(child: CircularProgressIndicator(color: primaryColor));
+                                }
+                                
+                                if (snapshot.data!.docs.isEmpty) {
+                                  return Text(
+                                    "Belum ada data Dosen. Tambahkan user Dosen dulu.", 
+                                    style: TextStyle(color: Colors.red, fontFamily: 'Poppins'),
+                                  );
+                                }
+                                
+                                var dosens = snapshot.data!.docs;
+                                return DropdownButtonFormField<String>(
+                                  value: _selectedDospemID,
+                                  isExpanded: true,
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  ),
+                                  hint: Text("Pilih Nama Dosen", style: TextStyle(fontFamily: 'Poppins')),
+                                  items: dosens.map((doc) {
+                                    var data = doc.data() as Map<String, dynamic>;
+                                    return DropdownMenuItem(
+                                      value: doc.id,
+                                      child: Text(
+                                        "${data['nama']} (${data['nomorInduk']})",
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(fontFamily: 'Poppins', fontSize: 13),
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (val) => setState(() => _selectedDospemID = val),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 24),
+                    ],
+
+                    // 7. TOMBOL SIMPAN (Gradient Button)
+                    _isLoading 
+                      ? Center(child: CircularProgressIndicator(color: primaryColor))
+                      : InkWell(
+                          onTap: _submit,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            width: double.infinity,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Color(0xFFFF0000), // Merah Terang
+                                  Color(0xFF8B0000), // Merah Gelap
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: primaryColor.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 4),
+                                )
+                              ],
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              "SIMPAN USER",
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ),
+                        ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

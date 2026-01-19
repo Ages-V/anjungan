@@ -82,17 +82,41 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    /// LOGO UNIVERSITAS
                     Container(
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        color: Colors.grey[300],
                         shape: BoxShape.circle,
+                        color: Colors.white,
                       ),
-                      child: Icon(Icons.school, size: 50, color: Colors.grey[600]),
+                      child: ClipOval(
+                        child: Image.network(
+                          'https://1.bp.blogspot.com/-rGzybmEYVHM/XyMB2ITDpcI/AAAAAAAAC9k/MzGR0c6iF_ES8VgiLbuDa7r9jWVdoPWSQCLcBGAsYHQ/s1600/download%2BLOGO%2BUniversitas%2BTeknokrat%2BPNG.png',
+                          fit: BoxFit.contain,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Center(
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFFA50000),
+                              ),
+                            );
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            return Icon(
+                              Icons.image_not_supported,
+                              color: Colors.grey,
+                              size: 40,
+                            );
+                          },
+                        ),
+                      ),
                     ),
+
                     SizedBox(height: 20),
 
+                    /// JUDUL APLIKASI
                     Text.rich(
                       TextSpan(
                         children: [
@@ -106,9 +130,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                           ),
                           TextSpan(
-                            text: 'Universitas Teknokrat Indonesia',
+                            text: 'UNIVERSITAS TEKNOKRAT INDONESIA',
                             style: TextStyle(
-                              color: const Color(0xFFA50000),
+                              color: Color(0xFFA50000),
                               fontSize: 16,
                               fontFamily: 'Poppins',
                               fontWeight: FontWeight.w700,
@@ -118,8 +142,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
+
                     SizedBox(height: 40),
 
+                    /// EMAIL
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -148,18 +174,22 @@ class _LoginScreenState extends State<LoginScreen> {
                         decoration: InputDecoration(
                           hintText: "Email",
                           hintStyle: TextStyle(
-                            color: const Color(0x990B0101),
+                            color: Color(0x990B0101),
                             fontSize: 12,
                             fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w400,
                           ),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 17, vertical: 10),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 17,
+                            vertical: 10,
+                          ),
                         ),
                       ),
                     ),
+
                     SizedBox(height: 16),
 
+                    /// PASSWORD
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -192,15 +222,19 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.black.withOpacity(0.60),
                             fontSize: 12,
                             fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w400,
                           ),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(horizontal: 17, vertical: 10),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 17,
+                            vertical: 10,
+                          ),
                         ),
                       ),
                     ),
+
                     SizedBox(height: 24),
 
+                    /// BUTTON LOGIN
                     _isLoading
                         ? CircularProgressIndicator(color: Color(0xFFA50000))
                         : InkWell(
@@ -210,9 +244,12 @@ class _LoginScreenState extends State<LoginScreen> {
                               height: 45,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
-                                  begin: Alignment(0.50, -0.00),
-                                  end: Alignment(0.50, 1.00),
-                                  colors: [const Color(0xFFFF0000), const Color(0xFF5D0D0D)],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Color(0xFFFF0000),
+                                    Color(0xFF5D0D0D)
+                                  ],
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -228,6 +265,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                           ),
+
                     SizedBox(height: 16),
 
                     Align(
@@ -235,29 +273,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Text(
                         'Lupa Password?',
                         style: TextStyle(
-                          color: const Color(0xFFFF0000),
+                          color: Color(0xFFFF0000),
                           fontSize: 12,
                           fontStyle: FontStyle.italic,
                           fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w400,
                         ),
-                      ),
-                    ),
-                    
-                    SizedBox(height: 20),
-                    TextButton(
-                      onPressed: () {
-                        print("Menjadwalkan notifikasi...");
-                        NotificationService().scheduleNotification(
-                          id: 12345,
-                          title: "Halo Programmer!",
-                          body: "Notifikasi ini berhasil muncul! 🎉",
-                          scheduledTime: DateTime.now().add(Duration(seconds: 5)),
-                        );
-                      },
-                      child: Text(
-                        "TES NOTIFIKASI (5 DETIK)",
-                        style: TextStyle(color: Colors.green, fontSize: 10),
                       ),
                     ),
                   ],
