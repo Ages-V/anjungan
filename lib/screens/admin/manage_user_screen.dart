@@ -223,6 +223,23 @@ class _ManageUserScreenState extends State<ManageUserScreen> {
         appBar: AppBar(
           backgroundColor: primaryColor,
           elevation: 0,
+          
+          // === FIX UTAMA: TOMBOL BACK ===
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back_ios_new, size: 20, color: Colors.white),
+            onPressed: () {
+              // Cek apakah ada halaman sebelumnya di history?
+              if (Navigator.canPop(context)) {
+                Navigator.pop(context); // Jika ada, kembali normal
+              } else {
+                // Jika history kosong (setelah restart), paksa ke Admin Home
+                // Sesuai route di main.dart Anda: '/admin'
+                Navigator.pushReplacementNamed(context, '/admin'); 
+              }
+            },
+          ),
+          // ==============================
+
           title: Container(
             height: 40,
             decoration: BoxDecoration(
